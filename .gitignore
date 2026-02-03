@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Local environment variables (API keys, etc.)
+.env
+
+# Data files (Don't push large datasets to GitHub!)
+data/
+*.csv
+*.json
+*.sqlite
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Virtual environments
+.venv
+
+.virtual_documents/
+*.zip
+*.pdf
