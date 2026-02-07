@@ -7,7 +7,7 @@ import pandas as pd
 
 RAW_DATA_PATH = Path("data/raw/csv")
 
-# Shoudl this be stored in yaml or json instead?
+# Should this be stored in yaml or json instead?
 # For now, hardcoding the expected columns in the code for simplicity.
 EXPECTED_CUSTOMER_COLUMNS = {
     "customer_id",
