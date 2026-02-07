@@ -13,7 +13,7 @@ Transactions data is cleaned by:
 7. Sort transactions by customer_id and timestamp for logical grouping and easier analysis later on.
 
 Now handling the missing currency and category field is tricky. 
-During this etl pipeline, I'm going to impute missing currency as DKK and leave unkonwn categories as 'uncategorized'.
+During this etl pipeline, I'm going to impute missing currency as DKK and leave unknown categories as 'uncategorized'.
 The reasonning will be written in another document
 
 customers_df and transactions_df are going to be merged at the end of the transformation
