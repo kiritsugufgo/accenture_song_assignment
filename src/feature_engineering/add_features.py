@@ -1,7 +1,6 @@
 import pandas as pd
-from pathlib import Path
 import logging
-from etl.load import save_dataframe, load_processed_data
+from etl.load import save_dataframe
 
 logger = logging.getLogger(__name__)
 
