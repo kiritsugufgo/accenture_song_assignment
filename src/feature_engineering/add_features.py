@@ -22,7 +22,7 @@ def _calculate_base_metrics(df, snapshot_date):
 
 def run_feature_engineering(customers_df: pd.DataFrame, transactions_df: pd.DataFrame):
     # Main pipeline step for Gold Layer creation.
-    logger.info("Loading Silver data for feature engineering...") 
+    logger.info("Starting feature engineering on provided Silver-layer DataFrames...")
     
     # Date handling
     transactions = transactions_df.copy()
