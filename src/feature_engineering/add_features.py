@@ -30,11 +30,9 @@ def run_feature_engineering(customers_df: pd.DataFrame, transactions_df: pd.Data
     transactions['timestamp'] = pd.to_datetime(transactions['timestamp'])
     snapshot_date = transactions['timestamp'].max()
     
-    # Convert to EUR using exchange rates
-    transactions['amount_eur'] = transactions.apply(
-        lambda x: x['amount'] * EXCHANGE_RATES.get(x['currency'], 1.0), axis=1
-    )
-
+    # Convert to EUR using exchange rates (vectorized for performance)
+    rates = transactions['currency'].map(EXCHANGE_RATES).fillna(1.0)
+    transactions['amount_eur'] = transactions['amount'] * rates
     # Feature Calculation
     logger.info("Calculating behavioral features and policy flags...")
     gold_features = _calculate_base_metrics(transactions, snapshot_date)
