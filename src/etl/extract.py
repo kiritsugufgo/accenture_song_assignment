@@ -1,5 +1,5 @@
 '''
-Extract moddule that handles reading raw data files and validating their schemas.
+Extract module that handles reading raw data files and validating their schemas.
 Added schema validation in case more data are added in the future.
 '''
 from pathlib import Path
