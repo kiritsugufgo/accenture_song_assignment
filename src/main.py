@@ -2,8 +2,6 @@ import logging
 from etl.run_etl import run_etl_pipeline
 from feature_engineering.add_features import run_feature_engineering
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def main():
