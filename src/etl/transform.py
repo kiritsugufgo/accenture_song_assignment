@@ -32,7 +32,7 @@ def _handle_category_cleaning(transactions_df: pd.DataFrame) -> pd.DataFrame:
     
     df['is_category_imputed'] = df['category'].isna() | (df['category'].str.strip().str.lower() == 'unknown')
     
-    df['category'] = df['category'].fillna('uncategorized').str.lower()
+    df['category'] = df['category'].fillna('uncategorized').str.strip().str.lower()
     df.loc[df['category'] == 'unknown', 'category'] = 'uncategorized'
     
     return df
