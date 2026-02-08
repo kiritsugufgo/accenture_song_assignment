@@ -53,7 +53,7 @@ with st.container():
     user_input = st.text_area(
         "Your Question:",
         height=100,
-        placeholder="e.g., What are the top spending customers? Show me fraud patterns.",
+        placeholder="e.g., What are the top spending customers?",
         key="user_input_box"
     )
     
