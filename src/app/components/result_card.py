@@ -76,10 +76,11 @@ def render_result_card(
             st.markdown("---")
             st.markdown(f'<div class="question-text">📈 Visual Analysis:</div>', unsafe_allow_html=True)
             for i, fig in enumerate(plots):
-                w, h = fig.get_size_inches()
-                fig.set_size_inches(w * 0.5, h * 0.5)
-                # clear_figure=True helps manage memory in Streamlit
-                st.pyplot(fig, clear_figure=True)
+                # Temporarily resize figure for display without mutating stored figure state
+                orig_size = fig.get_size_inches().copy()
+                fig.set_size_inches(orig_size[0] * 0.5, orig_size[1] * 0.5)
+                st.pyplot(fig, clear_figure=False)
+                fig.set_size_inches(orig_size[0], orig_size[1])
                  
         # Metadata section (if provided)
         if metadata:
