@@ -32,19 +32,19 @@ pip install -r requirements.txt
 # Optional: Exact environment replication
 # pip install -r requirements-lock.txt
 
-### 2. Configuration
+### Configuration
 The project requires a Mistral AI API key to power the RAG component. 
 Create a .env file in the root directory and add your credentials:
 
 
 MISTRAL_API_KEY=your_api_key_here
 
-### 3. Running the Pipeline
+### Running the Pipeline
 The core ETL and data processing logic is handled through main source file. Run this to process the raw data and prepare the vector store. 
 
 python src/main.py
 
-### 4. Launch the UI
+### Launch the UI
 A Streamlit-based interfact is provided to interact with the RAG pipeline. This allows for both live LLM queries and mock testing
 
 streamlit run src/app/streamlit_app.py
