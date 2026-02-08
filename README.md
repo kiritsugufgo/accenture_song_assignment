@@ -44,12 +44,14 @@ Create a .env file in the root directory and add your credentials:
 MISTRAL_API_KEY=your_api_key_here
 
 ### Running the Pipeline
-The core ETL and data processing logic is handled through main source file. Run this to process the raw data and prepare the vector store. 
+The core ETL and data processing logic is handled through main source file.
+Run this to process the raw data and prepare the vector store. 
 
 python src/main.py
 
 ### Launch the UI
-A Streamlit-based interfact is provided to interact with the RAG pipeline. This allows for both live LLM queries and mock testing
+A Streamlit-based interfact is provided to interact with the RAG pipeline.
+This allows for both live LLM queries and mock testing
 
 streamlit run src/app/streamlit_app.py
 ```
