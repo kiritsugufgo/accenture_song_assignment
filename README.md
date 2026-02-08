@@ -128,8 +128,6 @@ The real value of this setup is its ability to synthesize information. If an end
 
 #### What I would improve with more time
 
-If I were to take this from a prototype to a production-grade system, these would be my next steps:
-
 * **Advanced Prompt Engineering & Few-Shot Prompting:** Currently, the agent relies on general instructions. I would implement "Few-Shot" examples in the system prompt—essentially giving the agent a library of "Correct" reasoning paths to follow. This would significantly reduce the "I cannot answer that" occurrences.
 * **Robust ETL & Orchestration:** I would move the local processing script into a proper orchestration tool (like Airflow or Databricksr). This would allow for automated data quality checks, schema enforcement and secure handling before it ever hits the vector store.
 * **Fine-tuned Embedding Models:** I would move beyond the default Mistral embeddings to a model fine-tuned on financial/fraud-specific terminology to improve the retrieval accuracy of our "Product Policy" chunks.
