@@ -5,6 +5,11 @@ build/
 dist/
 wheels/
 *.egg-info
+*.pyc
+
+# Editor / OS files
+*.swp
+.DS_Store
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
@@ -24,7 +29,10 @@ data/
 
 # Virtual environments
 .venv
+venv/
 
 .virtual_documents/
 *.zip
 *.pdf
+
+uv.lock
