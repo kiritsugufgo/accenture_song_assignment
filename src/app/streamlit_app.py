@@ -14,7 +14,7 @@ from app.components.result_card import render_result_card
 
 # Page config
 st.set_page_config(
-    page_title="RAG Assistant",
+    page_title="Yuto Kvist, Home Assignment",
     page_icon="🤖",
     layout="wide"
 )
@@ -23,64 +23,30 @@ st.set_page_config(
 if 'messages' not in st.session_state:
     st.session_state.messages = []
 
+if 'mock_test_idx' not in st.session_state:
+    st.session_state.mock_test_idx = -1
+
 @st.cache_resource
 def get_rag_engine():
     return RAGOrchestrator()
 
 rag_engine = get_rag_engine()
 
-# Mock RAG function for demonstration
-def mock_rag_query(question: str) -> Dict:
-    """
-    Mock RAG function that returns structured response.
-    Replace this with your actual RAG implementation.
-    """
-    # Mock answer
-    answer = f"""
-    Based on the analysis of customer data and transactions, here's what I found regarding your question:
-    
-    {question}
-    
-    The data shows interesting patterns in customer behavior. We observed that customers 
-    with higher transaction frequencies tend to have better engagement rates. The fraud 
-    detection guidelines suggest monitoring transactions above certain thresholds.
-    
-    Key insights:
-    - Average transaction value: $245.67
-    - Most active customer segment: Premium tier
-    - Fraud risk: Low (2.3% of transactions flagged)
-    """
-    
-    # Mock source data table
-    source_data = pd.DataFrame({
-        'Source': ['customers.csv', 'transactions.csv', 'fraud_guidelines.txt'],
-        'Type': ['CSV', 'CSV', 'Document'],
-        'Records Used': [150, 1250, 'N/A'],
-        'Relevance Score': [0.92, 0.88, 0.75],
-        'Last Updated': ['2024-01-15', '2024-01-20', '2024-01-10']
-    })
-    
-    # Mock metadata
-    metadata = {
-        'Processing Time': '1.2s',
-        'Confidence Score': '0.87',
-        'Model': 'RAG-v1',
-        'Total Sources': 3
-    }
-    
-    return {
-        'answer': answer,
-        'source_data': source_data,
-        'metadata': metadata
-    }
-    
 def real_rag_query(question: str) -> Dict:
     # This now returns the full dict: {answer, source_data, metadata}
     return rag_engine.ask(question)
-    
+   
+ # Sidebar with mock test button
+MOCK_TEST_QUESTIONS = [
+    "Could you provide a detailed profile for customer ID 1971?",
+    "Identify the top 5 customers by total spending and summarize their key traits.",
+    "Customer 2368 is interesting, I would like to visualize how it compares with the rest?",
+    "Show me the most expensive transactions."
+]
+
 # Title and description
-st.title("🤖 RAG Assistant")
-st.markdown("Ask questions about your customer data, transactions, and policies.")
+st.title("RAG UI for Nordic Financial Data Analysis")
+st.markdown("Ask questions about your customer data, transactions and policies.")
 
 # User input section (fixed at top)
 with st.container():
@@ -88,41 +54,76 @@ with st.container():
         "Your Question:",
         height=100,
         placeholder="e.g., What are the top spending customers? Show me fraud patterns.",
-        key="user_input"
+        key="user_input_box"
     )
     
-    col1, col2, col3 = st.columns([1, 1, 4])
+    # Button Row
+    col1, col2, col3, col4 = st.columns([1, 1, 1.5, 3])
     with col1:
         send_button = st.button("🚀 Send", type="primary", use_container_width=True)
     with col2:
         clear_button = st.button("🗑️ Clear", use_container_width=True)
+    with col3:
+        mock_test_button = st.button("🧪 Run Mock Test", use_container_width=True)
 
-# Handle clear button
-if clear_button:
-    st.session_state.messages = []
-    st.rerun()
+    # Logic: Handle Clear
+    if clear_button:
+        st.session_state.messages = []
+        st.session_state.mock_test_idx = -1
+        st.rerun()
 
-# Handle send button
-if send_button and user_input.strip():
-    # Call mock RAG function (replace with your actual RAG)
-    rag_response = real_rag_query(user_input)
+    # Logic: Handle Start Mock Test
+    if mock_test_button:
+        st.session_state.messages = []
+        st.session_state.mock_test_idx = 0
+        st.rerun()
+
+    # Logic: Handle Manual Query
+    if send_button and user_input.strip():
+        with st.spinner("Analyzing data..."):
+            try:
+                rag_response = real_rag_query(user_input)
+                st.session_state.messages.append({
+                    'question': user_input,
+                    'answer': rag_response['answer'],
+                    'source_data': rag_response.get('source_data'),
+                    'metadata': rag_response.get('metadata'),
+                    'plots': rag_response.get('metadata', {}).get('plots', [])
+                })
+            except Exception as e:
+                st.error(f"Error: {e}")
+        st.rerun()
+
+    # Logic: Automated Mock Test Execution
+    # This block ensures the spinner stays right here under the buttons
+    if 0 <= st.session_state.mock_test_idx < len(MOCK_TEST_QUESTIONS):
+        current_q = MOCK_TEST_QUESTIONS[st.session_state.mock_test_idx]
+        
+        with st.spinner(f"Running Mock Query {st.session_state.mock_test_idx + 1}/{len(MOCK_TEST_QUESTIONS)}..."):
+            try:
+                response = real_rag_query(current_q)
+                st.session_state.messages.append({
+                    'question': current_q,
+                    'answer': response['answer'],
+                    'source_data': response.get('source_data'),
+                    'metadata': response.get('metadata'),
+                    'plots': response.get('metadata', {}).get('plots', [])
+                })
+                st.session_state.mock_test_idx += 1
+                st.rerun()
+            except Exception as e:
+                st.error(f"Mock test failed at query {st.session_state.mock_test_idx}: {e}")
+                st.session_state.mock_test_idx = -1 # Stop on error
     
-    # Add to conversation history
-    st.session_state.messages.append({
-        'question': user_input,
-        'answer': rag_response['answer'],
-        'source_data': rag_response['source_data'],
-        'metadata': rag_response['metadata'],
-        'plots': rag_response['metadata'].get('plots', [])
-    })
-    
-    st.rerun()
+    elif st.session_state.mock_test_idx >= len(MOCK_TEST_QUESTIONS):
+        st.success("✅ Mock test sequence completed successfully!")
+        st.session_state.mock_test_idx = -1
 
-# Display conversation history
+# --- Conversation Display ---
 st.markdown("---")
 
-if len(st.session_state.messages) == 0:
-    st.info("👋 Welcome! Ask a question to get started.")
+if not st.session_state.messages:
+    st.info("👋 Welcome! Ask a question or run the mock test to get started.")
 else:
     st.subheader(f"💬 Conversation ({len(st.session_state.messages)} queries)")
     
@@ -130,7 +131,7 @@ else:
     for idx, message in enumerate(reversed(st.session_state.messages)):
         message_number = len(st.session_state.messages) - idx
         
-        with st.expander(f"Query #{message_number}", expanded=(idx == 0)):
+        with st.expander(f"Query #{message_number}: {message['question'][:60]}...", expanded=(idx == 0)):
             render_result_card(
                 question=message['question'],
                 answer=message['answer'],
@@ -139,34 +140,3 @@ else:
                 plots=message.get('plots'),
                 card_index=message_number
             )
-
-# Sidebar with mock test button
-with st.sidebar:
-    st.header("Settings")
-    
-    if st.button("🧪 Load Mock Test", use_container_width=True):
-        # Add a mock conversation
-        mock_questions = [
-            "What is the average transaction amount for premium customers?",
-            "Show me the fraud detection patterns from last month",
-            "Which customers have the highest lifetime value?"
-        ]
-        
-        st.session_state.messages = []
-        for q in mock_questions:
-            rag_response = mock_rag_query(q)
-            st.session_state.messages.append({
-                'question': q,
-                'answer': rag_response['answer'],
-                'source_data': rag_response['source_data'],
-                'metadata': rag_response['metadata']
-            })
-        
-        st.rerun()
-    
-    if st.session_state.messages:
-        st.metric("Total Queries", len(st.session_state.messages))
-    
-    st.markdown("---")
-    st.markdown("### About")
-    st.markdown("This RAG assistant helps you query customer data and policies.")
