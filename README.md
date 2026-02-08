@@ -113,3 +113,24 @@ The real value of this setup is its ability to synthesize information. If an end
 1.  **Retrieve:** It pulls the "Fraud Prevention" guidelines to identify high-risk triggers.
 2.  **Query:** It uses the CSV tool to check if the customer’s `frequent_transactor` flag or `total_spend_eur` matches those triggers.
 3.  **Conclude:** It provides a data-backed recommendation based on company policy.
+
+
+### Part 5 – Reflections and Future Roadmap
+
+#### Key Assumptions & Trade-offs
+
+* **Latency vs. Capability:** The biggest trade-off I encountered was the "Agent Tax." By moving from a simple retrieval system to an Agentic RAG, response times increased. The LLM now has to perform multiple "reasoning loops" to decide which tool to use before actually answering.
+* **Accuracy vs. Complexity:** While the agent can now perform complex tasks like data visualization and CSV querying, the "surface area" for errors is larger. More tools mean more opportunities for the LLM to get confused or return a "cannot answer" response if the tool output doesn't perfectly match its expectations.
+
+
+---
+
+
+
+## What I would improve with more time
+
+If I were to take this from a prototype to a production-grade system, these would be my next steps:
+
+* **Advanced Prompt Engineering & Few-Shot Prompting:** Currently, the agent relies on general instructions. I would implement "Few-Shot" examples in the system prompt—essentially giving the agent a library of "Correct" reasoning paths to follow. This would significantly reduce the "I cannot answer that" occurrences.
+* **Robust ETL & Orchestration:** I would move the local processing script into a proper orchestration tool (like Airflow or Databricksr). This would allow for automated data quality checks, schema enforcement and secure handling before it ever hits the vector store.
+* **Fine-tuned Embedding Models:** I would move beyond the default Mistral embeddings to a model fine-tuned on financial/fraud-specific terminology to improve the retrieval accuracy of our "Product Policy" chunks.
