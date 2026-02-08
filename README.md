@@ -114,8 +114,10 @@ The real value of this setup is its ability to synthesize information. If an end
 2.  **Query:** It uses the CSV tool to check if the customer’s `frequent_transactor` flag or `total_spend_eur` matches those triggers.
 3.  **Conclude:** It provides a data-backed recommendation based on company policy.
 
+---
 
-### Part 5 – Reflections and Future Roadmap
+
+## Reflections and Future Roadmap
 
 #### Key Assumptions & Trade-offs
 
@@ -123,11 +125,8 @@ The real value of this setup is its ability to synthesize information. If an end
 * **Accuracy vs. Complexity:** While the agent can now perform complex tasks like data visualization and CSV querying, the "surface area" for errors is larger. More tools mean more opportunities for the LLM to get confused or return a "cannot answer" response if the tool output doesn't perfectly match its expectations.
 
 
----
 
-
-
-## What I would improve with more time
+#### What I would improve with more time
 
 If I were to take this from a prototype to a production-grade system, these would be my next steps:
 
