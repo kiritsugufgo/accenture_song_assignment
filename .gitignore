@@ -36,3 +36,4 @@ venv/
 *.pdf
 
 uv.lock
+clean_venv/

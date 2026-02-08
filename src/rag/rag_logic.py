@@ -2,10 +2,7 @@ import os
 import json
 import pandas as pd
 from pathlib import Path
-from openai import OpenAI
-from google import genai
 from mistralai import Mistral
-from google.genai import types
 from dotenv import load_dotenv
 from .ingest import ChromaIngestor
 
@@ -24,10 +21,6 @@ DB_PATH = str(PROJECT_ROOT / "data" / "chroma_db")
 
 class RAGOrchestrator:
     def __init__(self):
-        #self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        #self.model = "gpt-4o-mini" 
-        #self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        #self.model = "gemini-2.0-flash-lite"
         self.client = Mistral(api_key=os.getenv("MISTRAL_API_KEY"))
         self.model = "mistral-small-latest"
 
