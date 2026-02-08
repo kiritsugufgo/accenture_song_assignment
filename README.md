@@ -72,3 +72,44 @@ The plots below show some of the "behind the scenes" looks at the data that help
 <img width="790" height="396" alt="image" src="https://github.com/user-attachments/assets/07f4084e-4646-404b-8488-0cba15f598e2" />
 
 The ETL pipeline in this project was built with a clear focus: making sure the transaction data comes out clean and that the customer profiles have the correct data types.
+
+
+### Part 2 – Feature Engineering + Simple Logic
+For this section, I chose to focus on **Feature Engineering** rather than building a rule-based classifier or a lightweight model. 
+
+After spending a good amount of time in the data exploration phase, I had a clear picture of which metrics would actually be useful. I decided to attach these features directly to each customer profile. This way, the RAG system doesn't just have access to raw text; it can easily "grab" summarized behavioral data like; spending habits or frequency, to give much more informed and context-aware answers.
+
+I chose this path to keep the solution clean and effective without overcomplicating things just for the sake of it. It’s about giving the AI the best possible "cheat sheet" to understand the customer.
+
+| Feature Name | Logic Description | Business Rationale |
+| :--- | :--- | :--- |
+| **is_currency_imputed** | Indicates if the original currency was missing and estimated. | **Financial Accuracy:** **Data Integrity:** Allows users to filter for raw data vs. estimated values when high precision is required. |
+| **total_spend_eur** | Aggregate transaction volume normalized to EUR using fixed exchange rates. | **Revenue Impact:** Identifies high-value accounts and drives customer tiering. |
+| **avg_transaction_value** | The mean EUR value per purchase. | **Behavioral Analysis:** Distinguishes between frequent low-cost buyers and occasional high-ticket shoppers. |
+| **recency_days** | Days elapsed since the user's last transaction (relative to the dataset's max date). | **Retention:** Primary indicator for churn risk or "sleeping" accounts. |
+| **transaction_frequency** | Total lifetime transaction count for the customer. | **Engagement:** Measures platform stickiness and long-term user loyalty. |
+| **high_ticket_user** | Boolean flag for any single transaction exceeding €500. | **Compliance:** Automatically triggers the "manual review" workflow required by our product policy. |
+| **frequent_transactor** | Boolean flag for users in the top 10% by transaction volume. | **Risk Management:** Highlights outlier behavior that may warrant a closer look for fraud prevention. |
+| **cross_border_count** | Count of transactions where the currency does not match the user's home country. | **Fraud Detection:** Key metric for flagging high-risk international activity patterns. |
+| **preferred_category** | The most frequent category assigned to the user (excluding "uncategorized"). | **Customer Support:** Enables LLM-driven support agents to prioritize the correct policy sections (e.g., Electronics) instantly. |
+
+
+### Part 3&4 - LLM Pipeline and output 
+
+**Architectural Approach: Agentic RAG**
+For this component, I moved beyond a standard RAG pipeline to build an **Agentic RAG**. My primary goal was to bridge the gap between our unstructured documents (FAQs, fraud guidelines, and product policies) and our structured customer data.
+
+While standard RAG is great for simple Q&A, it struggles when a question requires looking at a document *and* calculating numbers from a dataset simultaneously. By using an agentic framework, the system can "decide" which tool to use based on the user's intent.
+
+
+#### 1. The Toolset: Bridging Structured and Unstructured Data
+To make the RAG truly agentic, I provided it with specific capabilities it can call upon depending on the prompt:
+* **Knowledge Retrieval:** For answering "What is our policy on...?"
+* **CSV Analysis Tool:** To query the structured Silver-layer features we engineered (like `cross_border_count` or `high_ticket_user`).
+* **Visualization Tool:** To transform raw numbers into tables or plots that make business decisions easier to visualize.
+
+#### 2. Reasoning in Action
+The real value of this setup is its ability to synthesize information. If an end-user asks whether a specific customer should be flagged for fraud, the agent doesn't just guess. It follows a logical path:
+1.  **Retrieve:** It pulls the "Fraud Prevention" guidelines to identify high-risk triggers.
+2.  **Query:** It uses the CSV tool to check if the customer’s `frequent_transactor` flag or `total_spend_eur` matches those triggers.
+3.  **Conclude:** It provides a data-backed recommendation based on company policy.
