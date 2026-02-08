@@ -1,5 +1,9 @@
 # Song Data & AI Take-Home Assignment
 
+The main scope of the project was to build a tool that helps teams make decisions. By feeding analyzed data and cleaned insights into an agentic RAG pipeline, the system can quickly generate the summaries needed for customer service and business teams to resolve issues and identify patterns.
+
+---
+
 ## Technical Stack
 
 * **Language:** Python 3.11
