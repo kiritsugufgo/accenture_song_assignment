@@ -112,7 +112,8 @@ if send_button and user_input.strip():
         'question': user_input,
         'answer': rag_response['answer'],
         'source_data': rag_response['source_data'],
-        'metadata': rag_response['metadata']
+        'metadata': rag_response['metadata'],
+        'plots': rag_response['metadata'].get('plots', [])
     })
     
     st.rerun()
@@ -135,6 +136,7 @@ else:
                 answer=message['answer'],
                 source_data=message.get('source_data'),
                 metadata=message.get('metadata'),
+                plots=message.get('plots'),
                 card_index=message_number
             )
 

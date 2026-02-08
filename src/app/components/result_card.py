@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+import matplotlib.pyplot as plt
 
 def render_result_card(
     question: str,
     answer: str,
     source_data: Optional[pd.DataFrame] = None,
     metadata: Optional[Dict[str, Any]] = None,
+    plots: Optional[List[plt.Figure]] = None,
     card_index: int = 0
 ):
     """
@@ -17,6 +19,7 @@ def render_result_card(
         answer: The RAG-generated answer
         source_data: Optional DataFrame showing data sources used
         metadata: Optional dict with additional metadata
+        plots: Optional list of matplotlib figures for visual analysis
         card_index: Index for unique identification
     """
     with st.container():
@@ -68,7 +71,16 @@ def render_result_card(
             )
             
             st.markdown('</div>', unsafe_allow_html=True)
-        
+     
+        if plots:
+            st.markdown("---")
+            st.markdown(f'<div class="question-text">📈 Visual Analysis:</div>', unsafe_allow_html=True)
+            for i, fig in enumerate(plots):
+                w, h = fig.get_size_inches()
+                fig.set_size_inches(w * 0.5, h * 0.5)
+                # clear_figure=True helps manage memory in Streamlit
+                st.pyplot(fig, clear_figure=True)
+                 
         # Metadata section (if provided)
         if metadata:
             with st.expander("ℹ️ Additional Information"):

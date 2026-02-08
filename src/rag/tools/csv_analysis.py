@@ -3,6 +3,15 @@ import pandas as pd
 CUST_DF = pd.read_csv("data/processed_gold/gold_customers.csv")
 TRANS_DF = pd.read_csv("data/processed_gold/gold_transactions.csv")
 
+def get_gold_data_summary():
+    """Returns a string representation of the schema for LLM context."""
+    summary = f"""
+    TABLE SCHEMAS:
+    - GOLD_CUSTOMERS: {list(CUST_DF.columns)}
+    - GOLD_TRANSACTIONS: {list(TRANS_DF.columns)}
+    """
+    return summary
+
 def execute_data_analysis(query_type: str, table_name: str, column: str, value: str = None, operator: str = "==", n: int = 5):
     df = CUST_DF if table_name == "customers" else TRANS_DF
     
@@ -52,7 +61,8 @@ def get_csv_tool_definition():
         "type": "function",
         "function": {
             "name": "execute_data_analysis",
-            "description": "Query the Nordic finance gold datasets (customers and transactions).",
+            "description": ("Essential for behavioral analysis and specific customer lookups in the Nordic finance datasets. "
+                            "Query the Nordic finance gold datasets (customers and transactions)."),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -93,15 +103,3 @@ def get_csv_tool_definition():
             }
         }
     }
-
-def get_gold_data_summary():
-    # Keep your existing summary for context
-    cust_df = pd.read_csv("data/processed_gold/gold_customers.csv")
-    trans_df = pd.read_csv("data/processed_gold/gold_transactions.csv")
-    
-    summary = f"""
-    TABLE SCHEMAS:
-    - GOLD_CUSTOMERS: {list(cust_df.columns)}
-    - GOLD_TRANSACTIONS: {list(trans_df.columns)}
-    """
-    return summary

@@ -9,10 +9,12 @@ from google.genai import types
 from dotenv import load_dotenv
 from .ingest import ChromaIngestor
 
-from .data_tool import (
-    get_gold_data_summary, 
-    execute_data_analysis, 
-    get_csv_tool_definition
+from .tools import (
+    get_gold_data_summary,
+    execute_data_analysis,
+    get_csv_tool_definition,
+    generate_customer_visualization,
+    get_viz_tool_definition
 )
 
 load_dotenv()
@@ -31,103 +33,116 @@ class RAGOrchestrator:
 
         self.vector_db = ChromaIngestor(db_path=DB_PATH)
         self.gold_summary = get_gold_data_summary()
-        self.tools = [get_csv_tool_definition()]
-    
+        self.tools = [
+            get_csv_tool_definition(),
+            get_viz_tool_definition()
+        ]
+         
     def ask(self, user_query: str) -> dict:
-        """
-        Main entry point. Decides whether to use analytical tools 
-        or vector-based policy retrieval.
-        """
+        """Main entry point: Orchestrates the background context and agent loop."""
         try:
-            # 1. Route the query: Does the LLM need a tool?
-            response = self.client.chat.complete(
-                model=self.model,
-                messages=[{"role": "user", "content": user_query}],
-                tools=self.tools,
-                tool_choice="auto"
-            )
+            # 1. Get background context (Policy documents)
+            context, source_df = self._get_background_context(user_query)
             
-            message = response.choices[0].message
+            # 2. Prepare conversation state
+            messages = self._initialize_messages(user_query, context)
+            collected_plots = []
 
-            # 2. Branch A: Structured Data Analysis (Tool Calling)
-            if message.tool_calls:
-                return self._handle_tool_execution(user_query, message)
+            # 3. Enter Agentic Loop
+            for _ in range(3):
+                response = self.client.chat.complete(
+                    model=self.model,
+                    messages=messages,
+                    tools=self.tools
+                )
+                
+                msg = response.choices[0].message
+                messages.append(msg)
 
-            # 3. Branch B: Unstructured Policy Retrieval (Standard RAG)
-            return self._handle_vector_search(user_query)
+                if not msg.tool_calls:
+                    break
+                
+                # 4. Process tool calls and update conversation
+                turn_plots = self._process_tool_calls(msg.tool_calls, messages)
+                collected_plots.extend(turn_plots)
 
-        except Exception as e:
             return {
-                "answer": f"I encountered an error processing your request: {str(e)}",
-                "source_data": pd.DataFrame(),
-                "metadata": {"status": "error"}
+                "answer": messages[-1].content,
+                "source_data": source_df,
+                "metadata": {
+                    "method": "modular_agentic_rag",
+                    "plots": collected_plots,
+                    "steps": len(messages)
+                }
             }
 
-    def _handle_tool_execution(self, query: str, message) -> dict:
-        """Executes Python logic for data analysis and returns the LLM interpretation."""
-        tool_call = message.tool_calls[0]
-        args = json.loads(tool_call.function.arguments)
-        
-        # Execute the Pandas logic
-        analysis_result = execute_data_analysis(**args)
-        
-        # Final pass to summarize results for the user
-        final_response = self.client.chat.complete(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": query},
-                message,
-                {
-                    "role": "tool", 
-                    "name": tool_call.function.name, 
-                    "content": analysis_result, 
-                    "tool_call_id": tool_call.id
-                }
-            ]
-        )
-        
-        return {
-            "answer": final_response.choices[0].message.content,
-            "source_data": pd.DataFrame({"Operation": [args.get("query_type")], "Scope": [args.get("table_name")]}),
-            "metadata": {"method": "structured_tool_analysis", "tool": tool_call.function.name}
-        }
+        except Exception as e:
+            return self._handle_error(e)
 
-    def _handle_vector_search(self, query: str) -> dict:
-        """Performs vector search on policy docs and generates an answer."""
-        search_results = self.vector_db.collection.query(query_texts=[query], n_results=3)
-        
-        docs = search_results['documents'][0]
-        metas = search_results['metadatas'][0]
-        
-        context = "\n".join(docs)
+    def _get_background_context(self, query: str):
+        """Retrieves and formats policy data from the vector database."""
+        results = self.vector_db.collection.query(query_texts=[query], n_results=3)
+        context = "\n".join(results['documents'][0])
         source_df = pd.DataFrame([
             {"Source": m['source'], "Snippet": d[:75] + "..."} 
-            for m, d in zip(metas, docs)
+            for m, d in zip(results['metadatas'][0], results['documents'][0])
         ])
+        return context, source_df
 
-        system_prompt = f"""
-        You are a Nordic Finance Assistant. 
-        Use the following context to answer the user:
+    def _initialize_messages(self, query: str, context: str, specific_data: str = "No records fetched yet.") -> list:
+        #Constructs the initial system and user messages.
+        system_content = f"""
+        You are an AI Data Assistant for a Nordic financial firm. 
+        You have access to two main knowledge sources:
         
-        POLICY CONTEXT:
+        1. POLICY DOCUMENTS (Unstructured):
         {context}
         
-        DATA SCHEMA INFO:
+        2. CUSTOMER DATA SUMMARY (Structured):
         {self.gold_summary}
         
-        If the answer isn't in the context, say you don't know.
+        3. RELEVANT DATA RECORDS (Actual Evidence):
+        {specific_data}
+        
+        INSTRUCTIONS:
+        - If the user asks about a policy, cite the documents.
+        - If the user asks about customer metrics or statistics, use the data summary.
+        - If the user asks for a 'table' or 'summary', format your response clearly using Markdown.
+        - Use Section 3 (RELEVANT DATA RECORDS) to answer specific questions about customers.
+        - Cross-reference these records with Section 1 (POLICY) to see if the customer violates any rules.
+        - Be concise and professional.
         """
+        return [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": query}
+        ]
 
-        response = self.client.chat.complete(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
-            ]
-        )
+    def _process_tool_calls(self, tool_calls, messages: list) -> list:
+        #Iterates through tool calls, executes them, and updates message history
+        plots = []
+        data_evidence = ""
+        for call in tool_calls:
+            name = call.function.name
+            args = json.loads(call.function.arguments)
+            
+            if name == "execute_data_analysis":
+                result = execute_data_analysis(**args)
+                data_evidence += f"\n--- Data from {args['table_name']} ---\n{result}"
+            elif name == "generate_customer_visualization":
+                fig = generate_customer_visualization(**args)
+                plots.append(fig)
+                result = f"Generated {args['plot_type']} plot for customer {args['customer_id']}."
+            
+            messages.append({
+                "role": "tool", "name": name, 
+                "content": str(result), "tool_call_id": call.id
+            })
+        return plots
 
+    def _handle_error(self, e: Exception) -> dict:
+        # Error handling
         return {
-            "answer": response.choices[0].message.content,
-            "source_data": source_df,
-            "metadata": {"method": "vector_rag", "sources_found": len(docs)}
+            "answer": f"Agent error: {str(e)}",
+            "source_data": pd.DataFrame(),
+            "metadata": {"status": "error"}
         }
