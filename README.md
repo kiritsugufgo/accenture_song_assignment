@@ -26,8 +26,11 @@ venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
 
-# Install requirements
+# Recommended: Standard installation
 pip install -r requirements.txt
+
+# Optional: Exact environment replication
+# pip install -r requirements-lock.txt
 
 ### 2. Configuration
 The project requires a Mistral AI API key to power the RAG component. 
